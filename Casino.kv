@@ -1,0 +1,263 @@
+<colorBehavior@Widget>:
+	backgroundColor: 0,0,0,1
+	canvas.before:
+		Color:
+			rgba:self.backgroundColor
+		Rectangle:
+			size:self.size
+			pos:self.pos
+<startScreen>:
+	BoxLayout:
+		orientation: 'vertical'
+		Button:
+			text:"Start!"
+			on_release: app.root.current = 'Lobby'
+		Button:
+			text:"Load!"
+<lobbyScreen>:
+	on_pre_enter: mainLabel.text= 'Welcome to the Casino de Coyote!\nYou have {x} dollars!'.format(x=app.checkMoney())
+	GridLayout:
+		cols:1
+		rows:2
+		Label:
+			id:mainLabel
+			halign:'center'
+			text:'Welcome to the Casino de Coyote!\nYou have ERROR dollars!'
+		GridLayout:
+			cols:4
+			rows:1
+			size_hint_y: .25
+			Button:
+				text: 'Blackjack'
+				on_release: app.root.current = 'Blackjack'
+			Button:
+				text: 'Roulette'
+				on_release: app.root.current = 'Roulette'
+			Button:
+				text: 'Craps'
+				on_release: app.root.current = 'Craps'
+			Button:
+				size_hint_x:.15
+				text: 'Save'
+<BlackjackScreen>:
+	on_enter:self.loadScreen()
+	GridLayout:
+		cols:1
+		rows:3
+		BoxLayout:
+			id:dealerHand
+			hand:root.dealerHand
+		BoxLayout:
+			id:yourHand
+			hand:root.yourHand
+		BoxLayout:
+			size_hint_y: .15
+			Button:
+				id: drawButton
+				text:"Draw!"
+				started:False
+				on_press: yourHand.hand.draw(root.deck, 1) if len(yourHand.hand)>1 else yourHand.hand.draw(root.deck, 2)
+				on_press: dealerHand.hand.draw(root.deck, 1) if len(yourHand.hand)>1 else dealerHand.hand.draw(root.deck, 2)
+				on_press: if self.started == False: app.changeMoney(-(app.checkBet()))
+				on_release: root.checkWin(yourHand.hand, dealerHand.hand)
+				on_release: self.started = True
+				on_release: betButton.disabled = True
+			Button:
+				id: stayButton
+				text:"Stay!"
+				on_release: root.checkWin(yourHand.hand, dealerHand.hand, 'stay')
+			Button:
+				text:"Restart!"
+				on_release: dealerHand.hand.discard(root.deck, 'all')
+				on_release: yourHand.hand.discard(root.deck, 'all')
+				on_release: root.buttonStates(False)
+				on_release: drawButton.started = False
+				on_release: root.loadScreen()
+			Button:
+				id: betButton
+				text: 'Bet amount'
+				on_release: app.betting.open()
+			Button:
+				text:"Back"
+				on_release: app.root.current = 'Lobby'
+				on_release: yourHand.hand.discard(root.deck, 'all')
+				on_release: dealerHand.hand.discard(root.deck, 'all')
+				on_release: root.buttonStates(False)
+				on_release: drawButton.started=False
+				on_release: app.changeBet(0)
+<RouletteLabel@Label+colorBehavior>:
+	backgroundColor:0,0,1,1
+	text:'Error'
+<rouletteScreen>:
+	canvas.before:
+		Color:
+			rgba:0,.39,0,1
+		Rectangle:
+			size:self.size
+			pos:self.pos
+	GridLayout:
+		#Main game screen
+		cols:3
+		rows:1
+		GridLayout:
+			#Space for the chip to be generated, bet amount, and SPIN button
+			cols:1
+			rows:3
+		GridLayout:
+			padding:1
+			spacing:1
+			id: bettingTable
+			cols:3
+			rows:12
+			RouletteLabel:
+				text:'1'
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'2'
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'3'
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'4'
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'5'
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'6'
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'7'
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'8'
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'9'
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'10'
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'11'
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'12'
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'13'
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'14'
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'15'
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'16'
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'17'
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'18'
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'19'
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'20'
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'21'
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'22'
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'23'
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'24'
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'25'
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'26'
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'27'
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'28'
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'29'
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'30'
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'31'
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'32'
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'33'
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'34'
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'35'
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'36'
+				backgroundColor:1,0,0,1
+			#Due to a number of issues I ran into with kivy, I was unable to automate the adding of these labels, resulting in this ridiculous 108 line mash.
+		GridLayout:
+			cols:1
+			rows:3
+			Button:
+				size_hint_y:.1
+				text: "Back"
+				on_release: app.root.current = 'Lobby'
+
+<crapsScreen>:
+	GridLayout:
+		cols:1
+		rows:2
+		Label:
+			text:"Craps"
+		Button:
+			text:"Back"
+			on_release: app.root.current = 'Lobby'
+<betPopup>:
+	on_open: amount.text = str(app.checkBet())
+	size_hint: (.5, .5)
+	GridLayout:
+		cols:1
+		rows:3
+		Label:
+			id: amount
+			text: 'Error'
+		BoxLayout:
+			Button:
+				text: '-'
+				on_release: amount.text = str(int(amount.text) - int(input.text))
+			TextInput:
+				multiline: False
+				halign: 'center'
+				padding:[0, (self.height-self.line_height)/2]
+				id: input
+				text: '0'
+			Button:
+				text: '+'
+				on_release: amount.text = str(int(amount.text) + int(input.text))
+		Button:
+			text: 'Done'
+			on_press:app.changeBet(int(amount.text))
+			on_release:root.dismiss()
