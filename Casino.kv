@@ -1,0 +1,347 @@
+<colorBehavior@Widget>:
+	backgroundColor: 0,0,0,1
+	canvas.before:
+		Color:
+			rgba:self.backgroundColor
+		Rectangle:
+			size:self.size
+			pos:self.pos
+			#Kivy does not include a simple background_color method for its widgets, and so an ABC must be instantiated to inherit the behavior from.
+
+<RouletteLabel@Label+colorBehavior>:
+	backgroundColor:0,0,1,1
+	text:'Error'
+	value:1
+	#The RouletteLabel class is created to ease debugging with its "error" message and blue coloring, if coloring is not assigned. It also inherits from colorBehavior to give that roulette button feel.
+<Pog>:
+	id:pog
+	size_hint_y:(1/14)
+	size_hint_x:None
+	width:self.height
+	text:rouletteBet.text
+	#A scatter is used, which is basically a rotatable draggable widget that covers the entire screen. It is then shrunk to just a bit smaller than a RouletteLabel, to keep it from being dragged when not intended and to make it easier to not accidentally select another label
+	Image:
+		id:chip
+		source:'card_img/chip.png'
+		size:(pog.height,pog.height)
+		#The image is created, and kept to the size of the preceding Scatter Widget
+		TextInput:
+			id:rouletteBet
+			halign:'center'
+			pos: [self.parent.center_x-(.5*self.width), self.parent.center_y-(.5*self.height)]
+			width:.8*self.parent.width
+			height:30
+			multiline:False
+			#It should have been simple to set pos_hint to None and set center: self.parent.center, but for some reason it placed the text input at the base of the chip image. As such pos is a little complicated, but it functions
+
+<startScreen>:
+	BoxLayout:
+		orientation: 'vertical'
+		Button:
+			text:"Start!"
+			on_release: app.root.current = 'Lobby'
+		Button:
+			text:"Load!"
+			#At the moment, the load button is a bit of a red herring, as are all of the save buttons. A simple pickle and unpickle should do the trick.
+<lobbyScreen>:
+	on_pre_enter: mainLabel.text= 'Welcome to the Casino de Coyote!\nYou have {x} dollars!'.format(x=app.checkMoney())
+	#Coyote is an old moniker of mine, and the casino needed a name. This line tells you how much money you do or do not have.
+	GridLayout:
+		cols:1
+		rows:2
+		Label:
+			id:mainLabel
+			halign:'center'
+			text:'Welcome to the Casino de Coyote!\nYou have ERROR dollars!'
+			#Kivy often will allow the app to continue running when errors are encountered in the behind-the-scenes. This is a simple debug message in case the screen's on_pre_enter does not work
+		GridLayout:
+			cols:3
+			rows:1
+			size_hint_y: .25
+			Button:
+				text: 'Blackjack'
+				on_release: app.root.current = 'Blackjack'
+			Button:
+				text: 'Roulette'
+				on_release: app.root.current = 'Roulette'
+			#Pick your poison
+			Button:
+				size_hint_x:.25
+				text: 'Save'
+			#A simple pickle function should be attached here
+<BlackjackScreen>:
+	on_enter:self.loadScreen()
+	GridLayout:
+		cols:1
+		rows:3
+		BoxLayout:
+			id:dealerHand
+			hand:root.dealerHand
+		BoxLayout:
+			id:yourHand
+			hand:root.yourHand
+		#Both hands reference the screen's hands for ease of writing
+		BoxLayout:
+			size_hint_y: .15
+			Button:
+				id: drawButton
+				text:"Draw!"
+				started:False
+				#Started created to keep you from getting your bet deducted each time you draw a card
+				on_press: yourHand.hand.draw(root.deck, 1) if len(yourHand.hand)>1 else yourHand.hand.draw(root.deck, 2)
+				on_press: dealerHand.hand.draw(root.deck, 1) if len(yourHand.hand)>1 else dealerHand.hand.draw(root.deck, 2)
+				#Two cards drawn to start, and then one per draw after
+				on_press: if self.started == False: app.changeMoney(-(app.checkBet()))
+				#Deducting the bet amount. Had to be placed on on_press because if it were placed on on_release, it and the changing of self.started would be done at about the same time, and I am unsure which would be first.
+				on_release: root.checkWin(yourHand.hand, dealerHand.hand)
+				on_release: self.started = True
+				on_release: betButton.disabled = True
+				#No changing your bets after everything has started. If requested, it could be changed so that it would only allow you to increase your bet, but at the moment this is simpler.
+			Button:
+				id: stayButton
+				text:"Stay!"
+				on_release: root.checkWin(yourHand.hand, dealerHand.hand, 'stay')
+				#At the moment, only immediately checks to see whose hand has more value, instead of making the dealer draw until it beats you or goes over 21.
+			Button:
+				text:"Restart!"
+				on_release: dealerHand.hand.discard(root.deck, 'all')
+				on_release: yourHand.hand.discard(root.deck, 'all')
+				on_release: root.buttonStates(False)
+				on_release: drawButton.started = False
+				#Having the player and the dealer discard their cards into the deck keeps the deck from depleting itself, and makes card counting possible, if you're into that sort of thing
+				on_release: root.loadScreen()
+			Button:
+				id: betButton
+				text: 'Bet amount'
+				on_release: app.betting.open()
+			Button:
+				text:"Back"
+				on_release: app.root.current = 'Lobby'
+				on_release: yourHand.hand.discard(root.deck, 'all')
+				on_release: dealerHand.hand.discard(root.deck, 'all')
+				on_release: root.buttonStates(False)
+				on_release: drawButton.started=False
+				#Resetting everything keeps things clean looking upon reentry.
+				on_release: app.changeBet(0)
+
+<rouletteScreen>:
+	canvas.before:
+		Color:
+			rgba:0,.39,0,1
+		Rectangle:
+			size:self.size
+			pos:self.pos
+	BoxLayout:
+		#Main game screen
+		cols:3
+		rows:1
+		BoxLayout:
+			#Space for the chip to be generated, the button for that, and a SPIN button
+			orientation:"vertical"
+			id: rouletteButtons
+			Button:
+				text:"SPIN"
+				on_release:root.betCheck()
+				on_press:root.spinWheel()
+			Button:
+				text: "Press me to generate a chip"
+				on_press:root.generatePog()
+			Label:
+				id:chipSpot
+				text:"hi!"
+		GridLayout:
+			padding:1
+			spacing:1
+			id: bettingTable
+			cols:3
+			rows:12
+			RouletteLabel:
+				id:label1
+				text:'1'
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'2'
+				id:label2
+				value:1
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'3'
+				id:label3
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'4'
+				id:label4
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'5'
+				id:label5
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'6'
+				id:label6
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'7'
+				id:label7
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'8'
+				id:label8
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'9'
+				id:label9
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'10'
+				id:label10
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'11'
+				id:label11
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'12'
+				id:label12
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'13'
+				id:label13
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'14'
+				id:label14
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'15'
+				id:label15
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'16'
+				id:label16
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'17'
+				id:label17
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'18'
+				id:label18
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'19'
+				id:label19
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'20'
+				id:label20
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'21'
+				id:label21
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'22'
+				id:label22
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'23'
+				id:label23
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'24'
+				id:label24
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'25'
+				id:label25
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'26'
+				id:label26
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'27'
+				id:label27
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'28'
+				id:label28
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'29'
+				id:label29
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'30'
+				id:label30
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'31'
+				id:label31
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'32'
+				id:label32
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'33'
+				id:label33
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'34'
+				id:label34
+				backgroundColor:1,0,0,1
+			RouletteLabel:
+				text:'35'
+				id:label35
+				backgroundColor:0,0,0,1
+			RouletteLabel:
+				text:'36'
+				id:label36
+				backgroundColor:1,0,0,1
+			#Due to a number of issues I ran into with kivy, I was unable to automate the adding of these labels, resulting in this ridiculous 108 line mash.
+		GridLayout:
+			cols:1
+			rows:4
+			Label:
+				text:"Winning number"
+				id:numberLabel
+			Label:
+				text:'Results'
+				id:resultLabel
+			Label:
+				text:'Winnings'
+				id:winningLabel
+			Button:
+				size_hint_y:.2
+				text: "Back"
+				on_release: app.root.current = 'Lobby'
+
+
+<betPopup>:
+	on_open: amount.text = str(app.checkBet())
+	size_hint: (.5, .5)
+	GridLayout:
+		cols:1
+		rows:3
+		Label:
+			id: amount
+			text: 'Error'
+		BoxLayout:
+			Button:
+				text: '-'
+				on_release: amount.text = str(int(amount.text) - int(input.text))
+			TextInput:
+				multiline: False
+				halign: 'center'
+				padding:[0, (self.height-self.line_height)/2]
+				id: input
+				text: '0'
+			Button:
+				text: '+'
+				on_release: amount.text = str(int(amount.text) + int(input.text))
+		Button:
+			text: 'Done'
+			on_press:app.changeBet(int(amount.text))
+			on_release:root.dismiss()
