@@ -1,0 +1,42 @@
+<mainLayout>:
+	GridLayout:
+		cols:2
+		rows:1
+		size_hint:(1, .3)
+		pos:(0, root.height/3)
+		Label:
+			id:label1
+			size_hint:(.5,1)
+			text:'Label 1'
+			value:1
+		Label:
+			id:label2
+			size_hint:(.5,1)
+			text:'Label 2'
+			value:2
+	Button:
+		text:"Check if collide"
+		on_press:root.betCheck()
+		size_hint:(.5,.3)
+		pos_hint:{'right':1}
+	Button:
+		text:'Press me'
+		size_hint:(.5,.3)
+		on_press: root.genpog()
+	BoxLayout:
+		id:spot
+		size_hint:(1,.3)
+
+<Pog>:
+	id:pog
+	size:chip.size
+	size_hint:(None,None)
+	Image:
+		id:chip
+		source:'card_img/chap.png'
+		TextInput:
+			halign:'center'
+			pos: [self.parent.center_x-(.5*self.width), self.parent.center_y-(.5*self.height)]
+			width:.8*self.parent.width
+			height:30
+			multiline:False

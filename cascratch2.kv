@@ -1,0 +1,14 @@
+<widgetColor@Widget>:
+	background_color:1,0,0,1
+	canvas.before:
+		Color:
+			rgba:self.background_color
+		Rectangle:
+			size:self.size
+			pos:self.pos
+<NewLabel@Label+widgetColor>
+	background_color:1,0,0,1
+	text:"error"
+<mainLayout>:
+	Button:
+		on_press:root.populate()
